@@ -31,9 +31,9 @@ app.use(
         return callback(null, true);
       }
 
-      // ✅ Allow your production frontend (example: Netlify/Vercel)
+      // ✅ Allow your production frontend (Netlify domain)
       const allowedOrigins = [
-        "https://your-frontend-domain.com", // replace with real prod domain
+        "https://primecart123.netlify.app", // your deployed frontend
       ];
 
       if (allowedOrigins.includes(origin)) {
