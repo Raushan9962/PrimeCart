@@ -1,15 +1,27 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/user.js";
-// ✅ Register Controller
+
+// Helper to generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
+
+// ✅ Register
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if user already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ error: "Email already registered." });
+    }
 
-    // Create new user (without role)
+    // Hash password
+   const hashedPassword = await bcrypt.hash(String(password), 10);
+
+    // Create user
     const user = await User.create({
       name,
       email,
@@ -18,16 +30,11 @@ export const register = async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    // Handle duplicate email error
-    if (err.code === 11000 && err.keyPattern?.email) {
-      return res.status(400).json({ error: "Email already registered." });
-    }
-
     res.status(400).json({ error: err.message });
   }
 };
 
-// ✅ Login Controller
+// ✅ Login
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -35,15 +42,12 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const match = await bcrypt.compare(password, user.password);
+  const match = await bcrypt.compare(String(password), String(user.password));
     if (!match) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Generate token without role
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = generateToken(user._id);
 
-    // Set HTTP-only cookie
+    // Send token as HttpOnly cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -51,7 +55,6 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Response
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -65,7 +68,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Logout Controller
+// ✅ Logout
 export const logout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logout successful" });

@@ -19,13 +19,34 @@ connectDB();
 // Initialize app
 const app = express();
 
-// Middlewares
+// ✅ CORS setup
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      // ✅ Allow all localhost:* during development
+      if (/^http:\/\/localhost:\d+$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      // ✅ Allow your production frontend (example: Netlify/Vercel)
+      const allowedOrigins = [
+        "https://your-frontend-domain.com", // replace with real prod domain
+      ];
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // ❌ Block everything else
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
+
 app.use(cookieParser());
 app.use(express.json());
 
@@ -37,5 +58,5 @@ app.use("/api/orders", orderRoutes);
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at ${PORT}`);
 });
