@@ -26,28 +26,16 @@ app.use(cookieParser());
 app.use(express.json());
 
 // ✅ CORS setup
+const allowedOrigins = [
+  "http://localhost:5173",           // dev frontend (Vite default)
+  "https://primecart123.netlify.app", // deployed frontend
+  "https://primecart.onrender.com",   // backend domain
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman)
-      if (!origin) return callback(null, true);
-
-      // ✅ Allow all localhost:* during development
-      if (/^http:\/\/localhost:\d+$/.test(origin)) {
-        return callback(null, true);
-      }
-
-      // ✅ Allow your production frontend
-      const allowedOrigins = [
-        "https://primecart123.netlify.app", // Netlify frontend
-        "https://primecart.onrender.com",   // Render backend domain
-      ];
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // ❌ Block everything else
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -60,11 +48,13 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 
 // ✅ Serve frontend in production
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  // For React Router (SPA)
+  // For React Router (SPA fallback)
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
