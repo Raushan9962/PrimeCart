@@ -1,8 +1,13 @@
 {
-"scripts": {
-  "build": "vite build",
-  "start": "vite"
+
+  "name": "primecart",
+  "scripts": {
+    "install": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && node server.js"
+  
 },
+
 
   "dependencies": {
     "cookie-parser": "^1.4.7",
