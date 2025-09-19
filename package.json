@@ -1,6 +1,12 @@
 {
+"scripts": {
+  "build": "vite build",
+  "start": "vite"
+},
+
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "jsonwebtoken": "^9.0.2"
   }
+
 }
